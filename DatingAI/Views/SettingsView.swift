@@ -20,9 +20,9 @@ struct SettingsView: View {
                             .foregroundColor(.gray)
                     }
 
-                    Link("Privacy Policy", destination: URL(string: "https://yourdomain.com/privacy")!)
-                    Link("Terms of Use", destination: URL(string: "https://yourdomain.com/terms")!)
-                    Link("Contact Support", destination: URL(string: "mailto:support@yourdomain.com")!)
+                    Link("Privacy Policy", destination: URL(string: "https://www.getoliviaai.app/r/privacy")!)
+                    Link("Terms of Use", destination: URL(string: "https://www.getoliviaai.app/r/terms")!)
+                    Link("Contact Support", destination: URL(string: "mailto:oliviaaiappsupport@gmail.com")!)
                 }
             }
             .navigationTitle("Settings")
