@@ -22,7 +22,7 @@ struct ChatView: View {
                     }
                 }
                 Spacer()
-                Image("oliviaimage") // Restored Olivia's profile picture
+                Image("oliviaimage")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 40, height: 40)
@@ -42,7 +42,7 @@ struct ChatView: View {
                                     VStack(alignment: .trailing, spacing: 4) {
                                         Text(message.text)
                                             .padding()
-                                            .background(Color.gray.opacity(0.2)) // Light gray for user messages
+                                            .background(Color.gray.opacity(0.2))
                                             .cornerRadius(10)
                                             .foregroundColor(.white)
                                             .frame(maxWidth: 250, alignment: .trailing)
@@ -52,7 +52,7 @@ struct ChatView: View {
                                             .padding(.trailing, 8)
                                     }
                                 } else {
-                                    Image("oliviaimage") // Restored Olivia's profile picture for messages
+                                    Image("oliviaimage")
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 30, height: 30)
@@ -60,7 +60,7 @@ struct ChatView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(message.text)
                                             .padding()
-                                            .background(Color.purple.opacity(0.3)) // Dark purple for Olivia's messages
+                                            .background(Color.purple.opacity(0.3))
                                             .cornerRadius(10)
                                             .foregroundColor(.white)
                                             .frame(maxWidth: 250, alignment: .leading)
@@ -72,6 +72,22 @@ struct ChatView: View {
                                     Spacer()
                                 }
                             }
+                            .id(message.id) // Ensure ID for scrolling
+                        }
+
+                        // Typing indicator when Olivia is "typing"
+                        if viewModel.isLoading {
+                            HStack(alignment: .top, spacing: 8) {
+                                Image("oliviaimage")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 30, height: 30)
+                                    .clipShape(Circle())
+                                TypingIndicator()
+                                    .frame(maxWidth: 250, alignment: .leading)
+                                Spacer()
+                            }
+                            .id("typingIndicator") // Unique ID for scrolling
                         }
                     }
                     .padding(.horizontal)
@@ -79,7 +95,14 @@ struct ChatView: View {
                 }
                 .onChange(of: viewModel.messages.count) { _ in
                     withAnimation {
-                        scrollViewProxy.scrollTo(viewModel.messages.last?.id, anchor: .bottom)
+                        scrollViewProxy.scrollTo(viewModel.messages.last?.id ?? "typingIndicator", anchor: .bottom)
+                    }
+                }
+                .onChange(of: viewModel.isLoading) { isLoading in
+                    if isLoading {
+                        withAnimation {
+                            scrollViewProxy.scrollTo("typingIndicator", anchor: .bottom)
+                        }
                     }
                 }
             }
@@ -119,13 +142,51 @@ struct ChatView: View {
         .navigationTitle("")
         .background(Color.black.ignoresSafeArea())
     }
-    
+
     // Format timestamp for display
     private func formatTimestamp(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+// Typing indicator view with animated dots
+struct TypingIndicator: View {
+    @State private var dotOpacity1: Double = 0.3
+    @State private var dotOpacity2: Double = 0.3
+    @State private var dotOpacity3: Double = 0.3
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .frame(width: 8, height: 8)
+                .foregroundColor(.white)
+                .opacity(dotOpacity1)
+            Circle()
+                .frame(width: 8, height: 8)
+                .foregroundColor(.white)
+                .opacity(dotOpacity2)
+            Circle()
+                .frame(width: 8, height: 8)
+                .foregroundColor(.white)
+                .opacity(dotOpacity3)
+        }
+        .padding()
+        .background(Color.purple.opacity(0.3)) // Match Olivia's message bubble
+        .cornerRadius(10)
+        .onAppear {
+            withAnimation(Animation.easeInOut(duration: 0.5).repeatForever().delay(0.0)) {
+                dotOpacity1 = 1.0
+            }
+            withAnimation(Animation.easeInOut(duration: 0.5).repeatForever().delay(0.2)) {
+                dotOpacity2 = 1.0
+            }
+            withAnimation(Animation.easeInOut(duration: 0.5).repeatForever().delay(0.4)) {
+                dotOpacity3 = 1.0
+            }
+        }
     }
 }
 

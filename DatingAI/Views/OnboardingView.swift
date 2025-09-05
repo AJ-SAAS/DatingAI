@@ -61,8 +61,7 @@ struct OnboardingView: View {
                         .tag(index)
                     }
                 }
-                .tabViewStyle(.page)
-                .indexViewStyle(.page(backgroundDisplayMode: .never))
+                .tabViewStyle(.page(indexDisplayMode: .never)) // Remove default page dots
                 
                 // Continue Button
                 Button(action: {
@@ -126,7 +125,7 @@ struct OnboardingPageView: View {
             Spacer()
             
             if isFirstPage {
-                VStack(spacing: 12) { // reduced spacing
+                VStack(spacing: 12) {
                     Spacer()
                     Text(description)
                         .font(.system(size: 28, weight: .medium, design: .rounded))
@@ -167,7 +166,7 @@ struct OnboardingPageView: View {
                 .scaledToFit()
                 .frame(maxWidth: size, maxHeight: size)
                 .foregroundColor(.white)
-                .padding(.vertical, 12) // moved up by reducing padding
+                .padding(.vertical, 12)
         } else {
             let height: CGFloat = (horizontalSizeClass == .regular) ? 450 : 300
             Image(imageName)
@@ -175,7 +174,7 @@ struct OnboardingPageView: View {
                 .scaledToFit()
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
-                .padding(.vertical, 12) // moved up slightly
+                .padding(.vertical, 12)
         }
     }
 }
@@ -203,4 +202,3 @@ struct ProgressBar: View {
 #Preview("iPad Pro") {
     OnboardingView(viewModel: AuthViewModel(), hasCompletedOnboarding: .constant(false))
 }
-

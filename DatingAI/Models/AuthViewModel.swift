@@ -8,7 +8,7 @@ class AuthViewModel: ObservableObject {
     @Published var password = ""
     @Published var confirmPassword = ""
     @Published var isSignedIn = false
-    @Published var isSignUp = true // Changed to true for default sign-up mode
+    @Published var isSignUp = true
 
     private var cancellables = Set<AnyCancellable>()
     private let db = Firestore.firestore()
@@ -62,6 +62,98 @@ class AuthViewModel: ObservableObject {
             self.isSignedIn = false
         } catch {
             print("Sign Out Error: \(error.localizedDescription)")
+        }
+    }
+
+    func updateEmail(newEmail: String, currentPassword: String, completion: @escaping (Error?) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user signed in"]))
+            return
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: user.email ?? "", password: currentPassword)
+        user.reauthenticate(with: credential) { _, error in
+            if let error = error {
+                print("Reauthentication Error: \(error.localizedDescription)")
+                completion(error)
+                return
+            }
+
+            user.updateEmail(to: newEmail) { error in
+                if let error = error {
+                    print("Update Email Error: \(error.localizedDescription)")
+                    completion(error)
+                    return
+                }
+
+                self.db.collection("users").document(user.uid).updateData([
+                    "email": newEmail
+                ]) { error in
+                    if let error = error {
+                        print("Error updating Firestore email: \(error.localizedDescription)")
+                    }
+                    completion(error)
+                }
+            }
+        }
+    }
+
+    func updatePassword(newPassword: String, currentPassword: String, completion: @escaping (Error?) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user signed in"]))
+            return
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: user.email ?? "", password: currentPassword)
+        user.reauthenticate(with: credential) { _, error in
+            if let error = error {
+                print("Reauthentication Error: \(error.localizedDescription)")
+                completion(error)
+                return
+            }
+
+            user.updatePassword(to: newPassword) { error in
+                if let error = error {
+                    print("Update Password Error: \(error.localizedDescription)")
+                }
+                completion(error)
+            }
+        }
+    }
+
+    func deleteAccount(currentPassword: String, completion: @escaping (Error?) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user signed in"]))
+            return
+        }
+
+        // Reauthenticate user before deleting account
+        let credential = EmailAuthProvider.credential(withEmail: user.email ?? "", password: currentPassword)
+        user.reauthenticate(with: credential) { _, error in
+            if let error = error {
+                print("Reauthentication Error: \(error.localizedDescription)")
+                completion(error)
+                return
+            }
+
+            // Delete Firestore user data
+            self.db.collection("users").document(user.uid).delete { error in
+                if let error = error {
+                    print("Error deleting Firestore data: \(error.localizedDescription)")
+                    completion(error)
+                    return
+                }
+
+                // Delete Firebase Auth account
+                user.delete { error in
+                    if let error = error {
+                        print("Delete Account Error: \(error.localizedDescription)")
+                    } else {
+                        self.isSignedIn = false
+                    }
+                    completion(error)
+                }
+            }
         }
     }
 
