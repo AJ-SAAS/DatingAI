@@ -4,44 +4,56 @@ struct UserProfileView: View {
     @StateObject private var viewModel = UserProfileViewModel()
 
     var body: some View {
-        Form {
-            Section(header: Text("Profile Photo")) {
-                HStack {
-                    Spacer()
-                    if let image = viewModel.profileImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 100, height: 100)
-                            .clipShape(Circle())
-                    } else {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(.gray)
+        NavigationView {
+            Form {
+                Section(header: Text("Profile Photo")) {
+                    HStack {
+                        Spacer()
+                        if let image = viewModel.profileImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
                     }
-                    Spacer()
+
+                    Button("Change Photo") {
+                        // We'll handle this in a future step
+                    }
                 }
 
-                Button("Change Photo") {
-                    // We'll handle this in a future step
+                Section(header: Text("Name")) {
+                    TextField("Enter your name", text: $viewModel.name)
+                        .padding(.horizontal)
+                }
+
+                Section {
+                    Button("Save Changes") {
+                        viewModel.saveUserProfile()
+                    }
                 }
             }
-
-            Section(header: Text("Name")) {
-                TextField("Enter your name", text: $viewModel.name)
+            .navigationTitle("Edit Profile")
+            .onAppear {
+                viewModel.loadUserProfile()
             }
-
-            Section {
-                Button("Save Changes") {
-                    viewModel.saveUserProfile()
-                }
-            }
-        }
-        .navigationTitle("Edit Profile")
-        .onAppear {
-            viewModel.loadUserProfile()
+            .background(Color(.systemBackground))
         }
     }
+}
+
+#Preview("iPhone 14") {
+    UserProfileView()
+}
+
+#Preview("iPad Pro") {
+    UserProfileView()
 }

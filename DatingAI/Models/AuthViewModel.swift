@@ -8,9 +8,10 @@ class AuthViewModel: ObservableObject {
     @Published var password = ""
     @Published var confirmPassword = ""
     @Published var isSignedIn = false
-    @Published var isSignUp = false // toggle between login/signup
+    @Published var isSignUp = true // Changed to true for default sign-up mode
 
     private var cancellables = Set<AnyCancellable>()
+    private let db = Firestore.firestore()
 
     init() {
         self.isSignedIn = Auth.auth().currentUser != nil
@@ -33,11 +34,11 @@ class AuthViewModel: ObservableObject {
     }
 
     private func createUserProfile(uid: String, email: String) {
-        let db = Firestore.firestore()
         db.collection("users").document(uid).setData([
             "email": email,
             "name": "",
-            "profileImageURL": ""
+            "profileImageURL": "",
+            "hasCompletedOnboarding": false
         ]) { error in
             if let error = error {
                 print("Error creating user profile: \(error.localizedDescription)")
@@ -61,6 +62,37 @@ class AuthViewModel: ObservableObject {
             self.isSignedIn = false
         } catch {
             print("Sign Out Error: \(error.localizedDescription)")
+        }
+    }
+
+    func checkOnboardingStatus(completion: @escaping (Bool) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        db.collection("users").document(uid).getDocument { snapshot, error in
+            if let error = error {
+                print("Error checking onboarding status: \(error.localizedDescription)")
+                completion(false)
+            } else if let data = snapshot?.data(), let hasCompleted = data["hasCompletedOnboarding"] as? Bool {
+                completion(hasCompleted)
+            } else {
+                completion(false)
+            }
+        }
+    }
+
+    func markOnboardingComplete() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("No user signed in to mark onboarding complete")
+            return
+        }
+        db.collection("users").document(uid).updateData([
+            "hasCompletedOnboarding": true
+        ]) { error in
+            if let error = error {
+                print("Error updating onboarding status: \(error.localizedDescription)")
+            }
         }
     }
 }
