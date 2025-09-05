@@ -25,16 +25,15 @@ class ChatViewModel: ObservableObject {
         }
         self.userID = userID
         
-        // Load initial welcome message
+        // Initial welcome message
         let welcomeMessage = ChatMessage(
-            text: "Hey there! I'm Olivia, your dating coach. 😊 Tell me what's up—like if you're on a date and the convo's gone cold—and I'll give you step-by-step tips to make it spark!",
+            text: "Hey! I'm Olivia, your dating coach winggirl. 😏 Whether you need a quick one-liner or playful advice, I’ve got your back.",
             isFromUser: false,
             timestamp: Date()
         )
         messages.append(welcomeMessage)
         saveMessageToFirestore(welcomeMessage)
         
-        // Load messages from Firestore
         loadMessagesFromFirestore()
     }
     
@@ -58,27 +57,21 @@ class ChatViewModel: ObservableObject {
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else { return }
         
         let systemPrompt = """
-        You are Olivia, a dating coach AI modeled after Olivia Alexa, a YouTuber with 400,000+ subscribers who helps men improve their dating lives. Your tone is warm, witty, encouraging, and slightly flirty, like a supportive winggirl. Provide practical, step-by-step advice for men in real-time dating scenarios (e.g., conversation going cold). Use specific examples, like suggesting questions or topics (e.g., 'Ask about her favorite travel story'). Avoid vague advice and focus on actionable steps that feel natural. If the user describes a situation, tailor the response. Incorporate emotional intelligence and modern dating tips, and end with an encouraging message like 'You've got this!' Return responses in this JSON format:
-        {
-          "steps": [
-            {"step": 1, "action": "Description of step 1", "example": "Example for step 1"},
-            {"step": 2, "action": "Description of step 2", "example": "Example for step 2"}
-          ],
-          "encouragement": "A confidence-boosting message"
-        }
+        You are Olivia Alexa, a witty and supportive dating coach AI. 
+        Respond in **short, punchy, playful one-liners or questions**, maximum 1–3 sentences. 
+        Avoid writing paragraphs or long lists. Be confident, flirty, and encouraging. Always avoid toxic, rude or degrading language. Keep it confident and high-value.
+        Keep it high-value and respectful. End with a quick confidence boost like “You got this.”
         """
         
         let payload: [String: Any] = [
-            "model": "gpt-4o",
+            "model": "gpt-4o-mini",
             "messages": [
-                ["role": "system", "content": systemPrompt],
-                // Include recent messages for context (last 10)
-                ] + messages.suffix(10).map { ["role": $0.isFromUser ? "user" : "assistant", "content": $0.text] } + [
+                ["role": "system", "content": systemPrompt]
+            ] + messages.suffix(10).map { ["role": $0.isFromUser ? "user" : "assistant", "content": $0.text] } + [
                 ["role": "user", "content": input]
             ],
-            "temperature": 0.7,
-            "max_tokens": 500,
-            "response_format": ["type": "json_object"]
+            "temperature": 0.85,
+            "max_tokens": 150
         ]
         
         var request = URLRequest(url: url)
@@ -90,12 +83,7 @@ class ChatViewModel: ObservableObject {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         } catch {
             print("Error encoding request body: \(error)")
-            await MainActor.run {
-                let errorMessage = ChatMessage(text: "Oops, something went wrong. Try again?", isFromUser: false)
-                self.messages.append(errorMessage)
-                self.saveMessageToFirestore(errorMessage)
-                self.isLoading = false
-            }
+            await handleError()
             return
         }
         
@@ -104,12 +92,10 @@ class ChatViewModel: ObservableObject {
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let choices = json["choices"] as? [[String: Any]],
                let message = choices.first?["message"] as? [String: Any],
-               let content = message["content"] as? String,
-               let contentData = content.data(using: .utf8),
-               let jsonResponse = try? JSONDecoder().decode(DatingAdvice.self, from: contentData) {
+               let content = message["content"] as? String {
+                
                 await MainActor.run {
-                    let formattedResponse = jsonResponse.steps.map { "Step \($0.step): \($0.action)\nExample: \($0.example)" }.joined(separator: "\n\n") + "\n\n\(jsonResponse.encouragement)"
-                    let aiMessage = ChatMessage(text: formattedResponse, isFromUser: false)
+                    let aiMessage = ChatMessage(text: content.trimmingCharacters(in: .whitespacesAndNewlines), isFromUser: false)
                     self.messages.append(aiMessage)
                     self.saveMessageToFirestore(aiMessage)
                 }
@@ -118,11 +104,16 @@ class ChatViewModel: ObservableObject {
             }
         } catch {
             print("OpenAI API Error: \(error)")
-            await MainActor.run {
-                let errorMessage = ChatMessage(text: "Oops, something went wrong. Try again?", isFromUser: false)
-                self.messages.append(errorMessage)
-                self.saveMessageToFirestore(errorMessage)
-            }
+            await handleError()
+        }
+    }
+    
+    private func handleError() async {
+        await MainActor.run {
+            let errorMessage = ChatMessage(text: "Oops, something went wrong. Try again?", isFromUser: false)
+            self.messages.append(errorMessage)
+            self.saveMessageToFirestore(errorMessage)
+            self.isLoading = false
         }
     }
     
@@ -150,14 +141,4 @@ class ChatViewModel: ObservableObject {
                 }
             }
     }
-}
-
-struct DatingAdvice: Codable {
-    struct Step: Codable {
-        let step: Int
-        let action: String
-        let example: String
-    }
-    let steps: [Step]
-    let encouragement: String
 }

@@ -5,9 +5,15 @@ struct SplashView: View {
         ZStack {
             Color.red
                 .ignoresSafeArea()
-            Text("Olivia AI")
-                .font(.system(size: 45, weight: .bold, design: .rounded)) // Increased from 40 to 45
-                .foregroundColor(.white)
+            VStack(spacing: 20) { // Added VStack to stack image and text vertically
+                Image("heartimage") // Added heartimage
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100, height: 100) // Adjust size as needed
+                Text("Olivia AI")
+                    .font(.system(size: 45, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            }
         }
     }
 }

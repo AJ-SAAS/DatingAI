@@ -22,7 +22,7 @@ struct ChatView: View {
                     }
                 }
                 Spacer()
-                Image("oliviaimage") // Replaced placeholder
+                Image("oliviaimage") // Restored Olivia's profile picture
                     .resizable()
                     .scaledToFit()
                     .frame(width: 40, height: 40)
@@ -52,7 +52,7 @@ struct ChatView: View {
                                             .padding(.trailing, 8)
                                     }
                                 } else {
-                                    Image("oliviaimage") // Replaced placeholder
+                                    Image("oliviaimage") // Restored Olivia's profile picture for messages
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 30, height: 30)
@@ -88,7 +88,7 @@ struct ChatView: View {
                 .background(Color.white.opacity(0.3))
 
             HStack(alignment: .center, spacing: 8) {
-                TextField("Ask your question...", text: $viewModel.currentInput)
+                TextField("", text: $viewModel.currentInput, prompt: Text("What's on your mind..?").foregroundColor(.gray.opacity(0.7)))
                     .textFieldStyle(PlainTextFieldStyle())
                     .padding()
                     .background(Color.black)
@@ -97,9 +97,6 @@ struct ChatView: View {
                             .stroke(Color.white, lineWidth: 1)
                     )
                     .foregroundColor(.white)
-                    .placeholder(when: viewModel.currentInput.isEmpty) {
-                        Text("Ask your question...").foregroundColor(.gray.opacity(0.5))
-                    }
                     .frame(minHeight: 48)
                     .padding(.horizontal)
 
@@ -132,7 +129,7 @@ struct ChatView: View {
     }
 }
 
-// Extension to add placeholder functionality
+// Extension to add placeholder functionality (optional, kept for reference)
 extension View {
     func placeholder<Content: View>(
         when shouldShow: Bool,

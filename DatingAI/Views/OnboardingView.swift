@@ -32,7 +32,7 @@ struct OnboardingView: View {
             "reviewimage"
         ),
         (
-            "Creat Your Account to Get Started",
+            "Create Your Account to Get Started",
             "Ready to take control of your dating journey? Let’s go!",
             nil
         )
