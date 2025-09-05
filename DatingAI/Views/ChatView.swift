@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
+    @FocusState private var isTextFieldFocused: Bool // Track TextField focus
 
     var body: some View {
         VStack {
@@ -72,7 +73,7 @@ struct ChatView: View {
                                     Spacer()
                                 }
                             }
-                            .id(message.id) // Ensure ID for scrolling
+                            .id(message.id)
                         }
 
                         // Typing indicator when Olivia is "typing"
@@ -87,7 +88,7 @@ struct ChatView: View {
                                     .frame(maxWidth: 250, alignment: .leading)
                                 Spacer()
                             }
-                            .id("typingIndicator") // Unique ID for scrolling
+                            .id("typingIndicator")
                         }
                     }
                     .padding(.horizontal)
@@ -104,6 +105,10 @@ struct ChatView: View {
                             scrollViewProxy.scrollTo("typingIndicator", anchor: .bottom)
                         }
                     }
+                }
+                // Dismiss keyboard on tap outside TextField
+                .onTapGesture {
+                    isTextFieldFocused = false
                 }
             }
 
@@ -122,9 +127,11 @@ struct ChatView: View {
                     .foregroundColor(.white)
                     .frame(minHeight: 48)
                     .padding(.horizontal)
+                    .focused($isTextFieldFocused) // Bind focus state
 
                 Button(action: {
                     viewModel.sendMessage()
+                    isTextFieldFocused = false // Dismiss keyboard after sending
                 }) {
                     Image(systemName: "paperplane.fill")
                         .foregroundColor(.white)
@@ -174,7 +181,7 @@ struct TypingIndicator: View {
                 .opacity(dotOpacity3)
         }
         .padding()
-        .background(Color.purple.opacity(0.3)) // Match Olivia's message bubble
+        .background(Color.purple.opacity(0.3))
         .cornerRadius(10)
         .onAppear {
             withAnimation(Animation.easeInOut(duration: 0.5).repeatForever().delay(0.0)) {

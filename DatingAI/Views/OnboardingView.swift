@@ -202,3 +202,4 @@ struct ProgressBar: View {
 #Preview("iPad Pro") {
     OnboardingView(viewModel: AuthViewModel(), hasCompletedOnboarding: .constant(false))
 }
+

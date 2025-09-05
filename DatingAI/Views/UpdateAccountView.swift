@@ -8,7 +8,7 @@ enum UpdateAccountMode {
 
 struct UpdateAccountView: View {
     @ObservedObject var viewModel: AuthViewModel
-    @State private var newValue: String = "" // New email or password
+    @State private var newValue: String = ""
     @State private var currentPassword: String = ""
     @State private var errorMessage: String?
     @Environment(\.dismiss) var dismiss
@@ -18,19 +18,23 @@ struct UpdateAccountView: View {
         Form {
             Section(header: Text(headerText)) {
                 if mode != .deleteAccount {
-                    TextField(mode == .email ? "New Email" : "New Password", text: $newValue)
-                        .textFieldStyle(.roundedBorder)
+                    TextField(placeholderText, text: $newValue)
+                        .textFieldStyle(.plain)
                         .padding()
-                        .foregroundColor(.white)
-                        .background(Color.black.opacity(0.8))
-                        .cornerRadius(8)
+                        .foregroundColor(.black)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
                 }
                 SecureField("Current Password", text: $currentPassword)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
                     .padding()
-                    .foregroundColor(.white)
-                    .background(Color.black.opacity(0.8))
-                    .cornerRadius(8)
+                    .foregroundColor(.black)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray, lineWidth: 1)
+                    )
                 if let error = errorMessage {
                     Text(error)
                         .foregroundColor(.red)
@@ -68,13 +72,27 @@ struct UpdateAccountView: View {
                 .foregroundColor(.white)
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(mode == .deleteAccount ? Color.red : Color.red) // Red button for all actions to match theme
+                .background(Color.red)
                 .cornerRadius(8)
             }
-            .listRowBackground(Color.gray.opacity(0.8))
+            .listRowBackground(Color.white)
         }
         .navigationTitle(headerText)
         .background(Color.gray.opacity(0.9).ignoresSafeArea())
+        .navigationBarBackButtonHidden(true) // Hide default back button
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                        Text("Settings")
+                    }
+                    .foregroundColor(.gray) // Dark gray back button
+                }
+            }
+        }
     }
 
     private var headerText: String {
@@ -85,6 +103,17 @@ struct UpdateAccountView: View {
             return "Update Password"
         case .deleteAccount:
             return "Delete Account"
+        }
+    }
+
+    private var placeholderText: String {
+        switch mode {
+        case .email:
+            return "Enter new email here"
+        case .password:
+            return "Enter new password here"
+        case .deleteAccount:
+            return ""
         }
     }
 
